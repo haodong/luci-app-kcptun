@@ -1,0 +1,28 @@
+language: c
+compiler: gcc
+dist: trusty
+sudo: false
+
+git:
+  depth: 1
+notifications:
+  email: false
+
+env:
+  - SDK_PATH=http://downloads.lede-project.org/snapshots/targets/x86/generic
+  - SDK_FILE_PREFIX=openwrt-sdk-x86-generic_
+  - SDK_BUILD_DIR="${HOME}/SDK"
+
+before_script:
+  - mkdir -p $SDK_BUILD_DIR && cd $SDK_BUILD_DIR
+  - wget "${SDK_PATH}/sha256sums" -O sha256sums
+  - ( grep -- "$SDK_FILE_PREFIX" sha256sums > sha256sums.small ) || echo "Can't find SDK file in sha256sums."; exit 1
+  - export $SDK_FILE="$(grep -- $SDK_FILE_PREFIX sha256sums.small | awk '{print $2}' | sed 's/*//g')"
+  - wget "${SDK_PATH}/${SDK_FILE}" -O "$SDK_FILE"
+  - ( sha256sum -c ./sha256sums.small ) || echo "SDK can not be verified!"; exit 1
+
+script:
+  - cd $SDK_BUILD_DIR
+  - tar -Jxf "${SDK_PATH}/${SDK_FILE}" --strip=1
+  - echo "src-git luci https://github.com/openwrt/luci.git"
+
